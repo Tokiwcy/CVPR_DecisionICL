@@ -1,0 +1,94 @@
+{
+  "scope": "full_validation_prediction_routed_out_of_fold",
+  "all": {
+    "count": 1000,
+    "baseline_accuracy": 0.87,
+    "guided_accuracy": 0.878,
+    "rescued": 63,
+    "harmed": 55,
+    "changed": 118
+  },
+  "routed": {
+    "count": 1000,
+    "baseline_accuracy": 0.87,
+    "guided_accuracy": 0.878,
+    "rescued": 63,
+    "harmed": 55,
+    "changed": 118
+  },
+  "target_errors": {
+    "count": 130,
+    "baseline_accuracy": 0.0,
+    "guided_accuracy": 0.4846153846153846,
+    "rescued": 63,
+    "harmed": 0,
+    "changed": 63
+  },
+  "other_errors": {
+    "count": 0,
+    "baseline_accuracy": null,
+    "guided_accuracy": null,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 0
+  },
+  "routed_correct": {
+    "count": 870,
+    "baseline_accuracy": 1.0,
+    "guided_accuracy": 0.9367816091954023,
+    "rescued": 0,
+    "harmed": 55,
+    "changed": 55
+  },
+  "unrouted": {
+    "count": 0,
+    "baseline_accuracy": null,
+    "guided_accuracy": null,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 0
+  },
+  "by_route": {
+    "landbird<->waterbird": {
+      "count": 290,
+      "baseline_accuracy": 0.7344827586206897,
+      "guided_accuracy": 0.8103448275862069,
+      "rescued": 46,
+      "harmed": 24,
+      "changed": 70
+    },
+    "waterbird<->landbird": {
+      "count": 710,
+      "baseline_accuracy": 0.9253521126760563,
+      "guided_accuracy": 0.9056338028169014,
+      "rescued": 17,
+      "harmed": 31,
+      "changed": 48
+    }
+  },
+  "cross_fitted_pair_gate": {
+    "count": 1000,
+    "baseline_accuracy": 0.87,
+    "guided_accuracy": 0.871,
+    "rescued": 14,
+    "harmed": 13,
+    "changed": 27,
+    "decisions": {
+      "landbird<->waterbird/fold-0": false,
+      "landbird<->waterbird/fold-1": true,
+      "landbird<->waterbird/fold-2": false,
+      "landbird<->waterbird/fold-3": false,
+      "waterbird<->landbird/fold-0": false,
+      "waterbird<->landbird/fold-1": false,
+      "waterbird<->landbird/fold-2": false,
+      "waterbird<->landbird/fold-3": false
+    },
+    "punish_beta": 2.0,
+    "decision_rule": "enable a pair on one fold only when rescue - beta * harm is positive on the other folds"
+  },
+  "routing_input": "baseline_prediction_only",
+  "query_gold_used_for_routing": false,
+  "background_metadata_used_for_selection_or_inference": false,
+  "test_split_used": false,
+  "condition": "learned"
+}

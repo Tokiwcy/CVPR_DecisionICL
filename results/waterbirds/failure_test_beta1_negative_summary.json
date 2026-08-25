@@ -1,0 +1,64 @@
+{
+  "scope": "frozen_test_prediction_routed",
+  "all": {
+    "count": 1000,
+    "baseline_accuracy": 0.859,
+    "guided_accuracy": 0.86,
+    "rescued": 31,
+    "harmed": 30,
+    "changed": 61
+  },
+  "routed": {
+    "count": 453,
+    "baseline_accuracy": 0.8962472406181016,
+    "guided_accuracy": 0.8984547461368654,
+    "rescued": 31,
+    "harmed": 30,
+    "changed": 61
+  },
+  "unrouted": {
+    "count": 547,
+    "baseline_accuracy": 0.8281535648994516,
+    "guided_accuracy": 0.8281535648994516,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 0
+  },
+  "conflict": {
+    "count": 500,
+    "baseline_accuracy": 0.772,
+    "guided_accuracy": 0.786,
+    "rescued": 29,
+    "harmed": 22,
+    "changed": 51
+  },
+  "aligned": {
+    "count": 500,
+    "baseline_accuracy": 0.946,
+    "guided_accuracy": 0.934,
+    "rescued": 2,
+    "harmed": 8,
+    "changed": 10
+  },
+  "group_accuracy": {
+    "landbird_on_land": 0.992,
+    "landbird_on_water": 0.944,
+    "waterbird_on_land": 0.628,
+    "waterbird_on_water": 0.876
+  },
+  "worst_group_accuracy": 0.628,
+  "class_accuracy": {
+    "landbird": 0.968,
+    "waterbird": 0.752
+  },
+  "worst_class_accuracy": 0.752,
+  "enabled_pairs": [
+    "landbird<->waterbird"
+  ],
+  "routing_input": "baseline_prediction_only",
+  "rule_fold_assignment": "stable hash of test query ID",
+  "query_gold_used_for_routing": false,
+  "test_metadata_used_for_routing_or_rule_selection": false,
+  "test_labels_used_only_after_predictions_were_frozen": true,
+  "condition": "learned"
+}

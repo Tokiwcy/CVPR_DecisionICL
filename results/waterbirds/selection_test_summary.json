@@ -1,0 +1,92 @@
+{
+  "split": "test",
+  "shots": 3,
+  "lambda": "0.075",
+  "methods": {
+    "rices_global_3shot": {
+      "n": 1000,
+      "overall_accuracy": 0.85,
+      "aligned_accuracy": 0.95,
+      "conflict_accuracy": 0.75,
+      "mean_group_accuracy": 0.85,
+      "worst_group_accuracy": 0.748,
+      "group_accuracy": {
+        "landbird_on_land": 0.98,
+        "landbird_on_water": 0.748,
+        "waterbird_on_land": 0.752,
+        "waterbird_on_water": 0.92
+      }
+    },
+    "hard_coverage_global_3shot": {
+      "n": 1000,
+      "overall_accuracy": 0.857,
+      "aligned_accuracy": 0.954,
+      "conflict_accuracy": 0.76,
+      "mean_group_accuracy": 0.857,
+      "worst_group_accuracy": 0.756,
+      "group_accuracy": {
+        "landbird_on_land": 0.988,
+        "landbird_on_water": 0.764,
+        "waterbird_on_land": 0.756,
+        "waterbird_on_water": 0.92
+      }
+    },
+    "weighted_additive_global_3shot": {
+      "n": 1000,
+      "overall_accuracy": 0.878,
+      "aligned_accuracy": 0.948,
+      "conflict_accuracy": 0.808,
+      "mean_group_accuracy": 0.878,
+      "worst_group_accuracy": 0.804,
+      "group_accuracy": {
+        "landbird_on_land": 0.984,
+        "landbird_on_water": 0.812,
+        "waterbird_on_land": 0.804,
+        "waterbird_on_water": 0.912
+      }
+    }
+  },
+  "paired_vs_rices": {
+    "hard_coverage_global_3shot": {
+      "overall": {
+        "n": 1000,
+        "rescue": 17,
+        "harm": 10,
+        "exact_mcnemar_p": 0.24778856337070465
+      },
+      "conflict": {
+        "n": 500,
+        "rescue": 12,
+        "harm": 7,
+        "exact_mcnemar_p": 0.359283447265625
+      },
+      "aligned": {
+        "n": 500,
+        "rescue": 5,
+        "harm": 3,
+        "exact_mcnemar_p": 0.7265625
+      }
+    },
+    "weighted_additive_global_3shot": {
+      "overall": {
+        "n": 1000,
+        "rescue": 52,
+        "harm": 24,
+        "exact_mcnemar_p": 0.0017618720029406244
+      },
+      "conflict": {
+        "n": 500,
+        "rescue": 47,
+        "harm": 18,
+        "exact_mcnemar_p": 0.0004221303234752052
+      },
+      "aligned": {
+        "n": 500,
+        "rescue": 5,
+        "harm": 6,
+        "exact_mcnemar_p": 1.0
+      }
+    }
+  },
+  "weighted_changed_contexts_vs_rices": 868
+}

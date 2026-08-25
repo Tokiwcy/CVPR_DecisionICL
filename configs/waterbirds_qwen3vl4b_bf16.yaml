@@ -1,0 +1,37 @@
+seed: 20260824
+manifest: ../data/waterbirds/manifest.jsonl
+output_dir: ../artifacts/waterbirds_weighted
+labels:
+  - landbird
+  - waterbird
+prompt_shots: 3
+selection_method_name: weighted_counter_spurious_global_3shot
+diagnostic:
+  kind: manifest_boolean
+  metadata_key: diagnostic
+  definition: training examples in which bird label and background disagree
+lambda_selection_objective: group_robustness
+max_aligned_accuracy_drop: 1.0
+target_model:
+  kind: qwen3_vl
+  model: ../models/Qwen3-VL-4B-Instruct
+  quantization: none
+  dtype: bfloat16
+  device_map: auto
+  attn_implementation: sdpa
+  local_files_only: true
+  classification_batch_size: 4
+  icl_batch_size: 2
+  min_pixels: 65536
+  max_pixels: 401408
+  efficient_next_logits: true
+  max_new_tokens: 32
+  task_instruction: Identify whether the bird is a landbird or a waterbird from the bird itself.
+similarity_model:
+  kind: siglip2
+  model: ../models/siglip2-base-patch16-224
+  dtype: float16
+  device: cuda
+  batch_size: 48
+  local_files_only: true
+diagnostic_subject_guidance: Prefer cues on the bird's bill, feet, legs, plumage, wings, neck, body proportions, and anatomy.

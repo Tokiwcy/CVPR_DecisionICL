@@ -1,0 +1,62 @@
+{
+  "protocol": {
+    "dataset": "Spawrious o2o_easy",
+    "model": "Qwen3-VL-4B-Instruct",
+    "precision": "bfloat16",
+    "shots": 3,
+    "baseline": "RICES global 3-shot",
+    "folds": 4,
+    "failure_slices": [
+      "labrador->bulldog",
+      "dachshund->labrador",
+      "dachshund->corgi"
+    ],
+    "background_metadata_used_for_selection_or_inference": false,
+    "test_split_used": false
+  },
+  "targeted_matched_oof": {
+    "examples": 144,
+    "target_errors": 48,
+    "matched_correct_controls": 96,
+    "label_only": {
+      "errors_rescued": 8,
+      "controls_harmed": 3,
+      "accuracy": 0.7013888888888888
+    },
+    "learned_diagnostic_rules": {
+      "errors_rescued": 23,
+      "controls_harmed": 0,
+      "accuracy": 0.8263888888888888
+    },
+    "learned_vs_label_only_paired": {
+      "learned_only_correct": 18,
+      "label_only_only_correct": 0,
+      "mcnemar_exact_p": 0.00000762939453125
+    }
+  },
+  "full_validation_prediction_routed_oof": {
+    "examples": 800,
+    "routing_input": "baseline prediction only",
+    "rices_accuracy": 0.93,
+    "label_only_accuracy": 0.9375,
+    "learned_rule_accuracy": 0.94625,
+    "learned_rule_rescued": 23,
+    "learned_rule_harmed": 10,
+    "learned_rule_vs_rices_mcnemar_exact_p": 0.03508203336969018,
+    "cross_fitted_pair_gate": {
+      "accuracy": 0.9525,
+      "rescued": 20,
+      "harmed": 2,
+      "mcnemar_exact_p_vs_rices": 0.00012111663818359375,
+      "enabled_pairs_all_folds": [
+        "labrador<->bulldog",
+        "dachshund<->corgi"
+      ],
+      "disabled_pairs_all_folds": [
+        "dachshund<->labrador"
+      ]
+    },
+    "label_only_cross_fitted_pair_gate_accuracy": 0.94
+  },
+  "interpretation": "Error-contrastive induction learned useful category-specific visual cues beyond merely naming an alternative class. Pair-level gating is required because one learned confusion rule had negative net value when applied broadly. This is a validation result, not a test result and not yet a demo-selection result."
+}

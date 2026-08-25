@@ -1,0 +1,106 @@
+{
+  "scope": "full_validation_prediction_routed_out_of_fold",
+  "all": {
+    "count": 800,
+    "baseline_accuracy": 0.93,
+    "guided_accuracy": 0.94625,
+    "rescued": 23,
+    "harmed": 10,
+    "changed": 38
+  },
+  "routed": {
+    "count": 632,
+    "baseline_accuracy": 0.9145569620253164,
+    "guided_accuracy": 0.935126582278481,
+    "rescued": 23,
+    "harmed": 10,
+    "changed": 38
+  },
+  "target_errors": {
+    "count": 48,
+    "baseline_accuracy": 0.0,
+    "guided_accuracy": 0.4791666666666667,
+    "rescued": 23,
+    "harmed": 0,
+    "changed": 23
+  },
+  "other_errors": {
+    "count": 6,
+    "baseline_accuracy": 0.0,
+    "guided_accuracy": 0.0,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 5
+  },
+  "routed_correct": {
+    "count": 578,
+    "baseline_accuracy": 1.0,
+    "guided_accuracy": 0.9826989619377162,
+    "rescued": 0,
+    "harmed": 10,
+    "changed": 10
+  },
+  "unrouted": {
+    "count": 168,
+    "baseline_accuracy": 0.9880952380952381,
+    "guided_accuracy": 0.9880952380952381,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 0
+  },
+  "by_route": {
+    "dachshund<->corgi": {
+      "count": 211,
+      "baseline_accuracy": 0.943127962085308,
+      "guided_accuracy": 0.966824644549763,
+      "rescued": 7,
+      "harmed": 2,
+      "changed": 9
+    },
+    "dachshund<->labrador": {
+      "count": 198,
+      "baseline_accuracy": 0.9090909090909091,
+      "guided_accuracy": 0.8838383838383839,
+      "rescued": 3,
+      "harmed": 8,
+      "changed": 12
+    },
+    "labrador<->bulldog": {
+      "count": 223,
+      "baseline_accuracy": 0.8923766816143498,
+      "guided_accuracy": 0.9506726457399103,
+      "rescued": 13,
+      "harmed": 0,
+      "changed": 17
+    }
+  },
+  "cross_fitted_pair_gate": {
+    "count": 800,
+    "baseline_accuracy": 0.93,
+    "guided_accuracy": 0.94875,
+    "rescued": 17,
+    "harmed": 2,
+    "changed": 23,
+    "decisions": {
+      "dachshund<->corgi/fold-0": false,
+      "dachshund<->corgi/fold-1": true,
+      "dachshund<->corgi/fold-2": true,
+      "dachshund<->corgi/fold-3": true,
+      "dachshund<->labrador/fold-0": false,
+      "dachshund<->labrador/fold-1": false,
+      "dachshund<->labrador/fold-2": false,
+      "dachshund<->labrador/fold-3": false,
+      "labrador<->bulldog/fold-0": true,
+      "labrador<->bulldog/fold-1": true,
+      "labrador<->bulldog/fold-2": true,
+      "labrador<->bulldog/fold-3": true
+    },
+    "punish_beta": 2.0,
+    "decision_rule": "enable a pair on one fold only when rescue - beta * harm is positive on the other folds"
+  },
+  "routing_input": "baseline_prediction_only",
+  "query_gold_used_for_routing": false,
+  "background_metadata_used_for_selection_or_inference": false,
+  "test_split_used": false,
+  "condition": "learned"
+}

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "behavior-icl"
+version = "0.1.0"
+description = "Diagnostic demonstration selection and failure-contrastive rule discovery for visual ICL"
+requires-python = ">=3.10"
+dependencies = [
+  "accelerate>=1.0",
+  "numpy>=1.26",
+  "Pillow>=10",
+  "PyYAML>=6",
+  "qwen-vl-utils>=0.0.14",
+  "torch>=2.6,<3",
+  "transformers>=5.14,<6",
+]
+
+[project.optional-dependencies]
+quantization = ["bitsandbytes>=0.49"]
+test = ["pytest>=8"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,66 @@
+{
+  "scope": "frozen_test_prediction_routed",
+  "all": {
+    "count": 24944,
+    "baseline_accuracy": 0.8958466966003849,
+    "guided_accuracy": 0.9178159076330982,
+    "rescued": 576,
+    "harmed": 28,
+    "changed": 696
+  },
+  "routed": {
+    "count": 7107,
+    "baseline_accuracy": 0.867173209511749,
+    "guided_accuracy": 0.9442802870409456,
+    "rescued": 576,
+    "harmed": 28,
+    "changed": 696
+  },
+  "unrouted": {
+    "count": 17837,
+    "baseline_accuracy": 0.9072714021416157,
+    "guided_accuracy": 0.9072714021416157,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 0
+  },
+  "conflict": {
+    "count": 24944,
+    "baseline_accuracy": 0.8958466966003849,
+    "guided_accuracy": 0.9178159076330982,
+    "rescued": 576,
+    "harmed": 28,
+    "changed": 696
+  },
+  "aligned": {
+    "count": 0,
+    "baseline_accuracy": null,
+    "guided_accuracy": null,
+    "rescued": 0,
+    "harmed": 0,
+    "changed": 0
+  },
+  "group_accuracy": {
+    "bulldog_on_dirt": 0.9838037203335471,
+    "corgi_on_jungle": 0.9732200128287364,
+    "dachshund_on_snow": 0.7926555484284797,
+    "labrador_on_desert": 0.9215843489416292
+  },
+  "worst_group_accuracy": 0.7926555484284797,
+  "class_accuracy": {
+    "bulldog": 0.9838037203335471,
+    "corgi": 0.9732200128287364,
+    "dachshund": 0.7926555484284797,
+    "labrador": 0.9215843489416292
+  },
+  "worst_class_accuracy": 0.7926555484284797,
+  "enabled_pairs": [
+    "labrador<->bulldog"
+  ],
+  "routing_input": "baseline_prediction_only",
+  "rule_fold_assignment": "stable hash of test query ID",
+  "query_gold_used_for_routing": false,
+  "test_metadata_used_for_routing_or_rule_selection": false,
+  "test_labels_used_only_after_predictions_were_frozen": true,
+  "condition": "learned"
+}

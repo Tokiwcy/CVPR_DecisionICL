@@ -1,0 +1,82 @@
+{
+  "lambda": "0.2",
+  "methods": {
+    "hard_coverage_global_3shot": {
+      "aligned_accuracy": null,
+      "class_accuracy": {
+        "bulldog": 0.9926234765875561,
+        "corgi": 0.9884541372674791,
+        "dachshund": 0.8527902501603593,
+        "labrador": 0.8704297626683771
+      },
+      "conflict_accuracy": 0.9260744066709429,
+      "group_accuracy": {
+        "bulldog_on_dirt": 0.9926234765875561,
+        "corgi_on_jungle": 0.9884541372674791,
+        "dachshund_on_snow": 0.8527902501603593,
+        "labrador_on_desert": 0.8704297626683771
+      },
+      "macro_accuracy": 0.9260744066709429,
+      "mean_group_accuracy": 0.9260744066709429,
+      "n": 24944,
+      "overall_accuracy": 0.9260744066709429,
+      "worst_class_accuracy": 0.8527902501603593,
+      "worst_group_accuracy": 0.8527902501603593
+    },
+    "rices_global_3shot": {
+      "aligned_accuracy": null,
+      "class_accuracy": {
+        "bulldog": 0.9882937780628608,
+        "corgi": 0.9732200128287364,
+        "dachshund": 0.7926555484284797,
+        "labrador": 0.8292174470814625
+      },
+      "conflict_accuracy": 0.8958466966003849,
+      "group_accuracy": {
+        "bulldog_on_dirt": 0.9882937780628608,
+        "corgi_on_jungle": 0.9732200128287364,
+        "dachshund_on_snow": 0.7926555484284797,
+        "labrador_on_desert": 0.8292174470814625
+      },
+      "macro_accuracy": 0.8958466966003849,
+      "mean_group_accuracy": 0.8958466966003849,
+      "n": 24944,
+      "overall_accuracy": 0.8958466966003849,
+      "worst_class_accuracy": 0.7926555484284797,
+      "worst_group_accuracy": 0.7926555484284797
+    },
+    "weighted_counter_spurious_global_3shot": {
+      "aligned_accuracy": null,
+      "class_accuracy": {
+        "bulldog": 0.9927838357921744,
+        "corgi": 0.995830660679923,
+        "dachshund": 0.8683450930083387,
+        "labrador": 0.9331302116741501
+      },
+      "conflict_accuracy": 0.9475224502886466,
+      "group_accuracy": {
+        "bulldog_on_dirt": 0.9927838357921744,
+        "corgi_on_jungle": 0.995830660679923,
+        "dachshund_on_snow": 0.8683450930083387,
+        "labrador_on_desert": 0.9331302116741501
+      },
+      "macro_accuracy": 0.9475224502886466,
+      "mean_group_accuracy": 0.9475224502886465,
+      "n": 24944,
+      "overall_accuracy": 0.9475224502886466,
+      "worst_class_accuracy": 0.8683450930083387,
+      "worst_group_accuracy": 0.8683450930083387
+    }
+  },
+  "paired_vs_rices": {
+    "hard_coverage_global_3shot": {
+      "harm": 124,
+      "rescue": 878
+    },
+    "weighted_counter_spurious_global_3shot": {
+      "harm": 121,
+      "rescue": 1410
+    }
+  },
+  "split": "test"
+}
