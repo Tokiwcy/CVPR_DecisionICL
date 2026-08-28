@@ -85,6 +85,33 @@ class MulticlassWeightedTests(unittest.TestCase):
         four = MODULE._config_fingerprint({**base, "prompt_shots": 4})
         self.assertNotEqual(one, four)
 
+    def test_test_selection_can_exclude_all_evaluation_metadata(self) -> None:
+        query = MODULE.Sample(
+            id="q",
+            split="test",
+            image="query.jpg",
+            label="gold-label",
+            group="secret-group",
+            metadata={"conflict": True, "spurious_attribute": "secret"},
+        )
+        train = [
+            MODULE.Sample(id="d", split="train", image="demo.jpg", label="a")
+        ]
+        row = MODULE._selection_row(
+            query,
+            train,
+            np.asarray(["d"]),
+            [0],
+            np.asarray([0.9], dtype=np.float32),
+            np.asarray([True]),
+            condition=MODULE.RICES,
+            include_evaluation_metadata=False,
+        )
+        self.assertNotIn("gold", row)
+        self.assertNotIn("group", row)
+        self.assertNotIn("conflict", row)
+        self.assertNotIn("spurious_attribute", row)
+
     def test_append_jsonl_preserves_existing_checkpoints(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "cache.jsonl"
@@ -92,6 +119,79 @@ class MulticlassWeightedTests(unittest.TestCase):
             MODULE._append_jsonl(path, [{"context_key": "b"}])
             rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(rows, [{"context_key": "a"}, {"context_key": "b"}])
+
+    def test_split_embedding_caches_join_in_manifest_order(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            first = root / "train_validation.npz"
+            second = root / "test.npz"
+            np.savez_compressed(
+                first,
+                sample_ids=np.asarray(["train", "validation"]),
+                values=np.asarray([[3.0, 0.0], [0.0, 2.0]], dtype=np.float32),
+            )
+            np.savez_compressed(
+                second,
+                sample_ids=np.asarray(["test"]),
+                values=np.asarray([[1.0, 1.0]], dtype=np.float32),
+            )
+            samples = [
+                SimpleNamespace(id="test"),
+                SimpleNamespace(id="train"),
+                SimpleNamespace(id="validation"),
+            ]
+            values = MODULE._load_embedding_caches([first, second], samples)
+            np.testing.assert_allclose(values[0], [2**-0.5, 2**-0.5])
+            np.testing.assert_allclose(values[1], [1.0, 0.0])
+            np.testing.assert_allclose(values[2], [0.0, 1.0])
+
+    def test_seed_rices_cache_requires_exact_context_match(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            output = root / "weighted"
+            audit = root / "audit"
+            selection_path = MODULE._condition_path(
+                output, "validation", MODULE.RICES
+            )
+            selection_path.parent.mkdir(parents=True)
+            selection_path.write_text(
+                json.dumps(
+                    {
+                        "query_id": "q",
+                        "demos": [{"id": "a"}, {"id": "b"}, {"id": "c"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            audit.mkdir()
+            (audit / "rices_predictions_label_free.jsonl").write_text(
+                json.dumps(
+                    {
+                        "query_id": "q",
+                        "prediction": "yes",
+                        "scores": {"yes": 0.8, "no": 0.2},
+                        "retrieved_ids": ["a", "b", "c"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            samples = [SimpleNamespace(id="q", label="yes", split="validation")]
+            count = MODULE.seed_rices_context_cache_from_audit(
+                output, "validation", audit, samples
+            )
+            self.assertEqual(count, 1)
+            rows = [
+                json.loads(line)
+                for line in (
+                    output / "predictions" / "validation" / "context_cache.jsonl"
+                )
+                .read_text(encoding="utf-8")
+                .splitlines()
+            ]
+            self.assertTrue(rows[0]["correct"])
+            self.assertEqual(rows[0]["retrieved_ids"], ["a", "b", "c"])
 
     def test_macro_and_worst_class_metrics_are_reported(self) -> None:
         rows = [

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFile
 
 from .math_utils import softmax
 from .prompts import atom_prompt, class_prompt, discovery_prompt, icl_prompt, task_icl_content
@@ -76,6 +76,23 @@ class VisualRetriever(ABC):
     @abstractmethod
     def embed(self, images: list[str]) -> np.ndarray:
         raise NotImplementedError
+
+
+def _open_rgb_image(path: str) -> Image.Image:
+    """Load one image, tolerating only Pillow's explicit truncated-file error."""
+    try:
+        with Image.open(path) as image:
+            return image.convert("RGB")
+    except OSError as error:
+        if "truncated" not in str(error).lower():
+            raise
+        previous = ImageFile.LOAD_TRUNCATED_IMAGES
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        try:
+            with Image.open(path) as image:
+                return image.convert("RGB")
+        finally:
+            ImageFile.LOAD_TRUNCATED_IMAGES = previous
 
 
 class MockTargetVLM(TargetVLM):
@@ -1065,7 +1082,7 @@ class Siglip2Retriever(VisualRetriever):
     def embed(self, images: list[str]) -> np.ndarray:
         rows: list[np.ndarray] = []
         for start in range(0, len(images), self.batch_size):
-            batch = [Image.open(path).convert("RGB") for path in images[start : start + self.batch_size]]
+            batch = [_open_rgb_image(path) for path in images[start : start + self.batch_size]]
             inputs = self.processor(images=batch, return_tensors="pt")
             inputs = {key: value.to(self.device) for key, value in inputs.items()}
             with self.torch.inference_mode():

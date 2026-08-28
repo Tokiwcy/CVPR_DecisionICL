@@ -1,0 +1,36 @@
+seed: 20260826
+manifest: ../data/spawrious_o2o_easy/manifest.jsonl
+output_dir: ../artifacts/spawrious_self_discovered
+labels:
+  - bulldog
+  - dachshund
+  - labrador
+  - corgi
+prompt_shots: 3
+self_discovered_threshold_provenance:
+  frozen_before_dataset_audit: true
+  developed_on: waterbirds
+  evaluated_unchanged_on: spawrious_o2o_easy
+  note: All atom-role thresholds and the similarity-loss budget were frozen before the Spawrious audit.
+target_model:
+  kind: qwen3_vl
+  model: ../models/Qwen3-VL-4B-Instruct
+  quantization: none
+  dtype: bfloat16
+  device_map: auto
+  attn_implementation: sdpa
+  local_files_only: true
+  classification_batch_size: 4
+  icl_batch_size: 2
+  min_pixels: 65536
+  max_pixels: 401408
+  efficient_next_logits: true
+  max_new_tokens: 32
+  task_instruction: Identify the dog breed shown in the image.
+similarity_model:
+  kind: siglip2
+  model: ../models/siglip2-base-patch16-224
+  dtype: float16
+  device: cuda
+  batch_size: 48
+  local_files_only: true

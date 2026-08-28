@@ -221,6 +221,29 @@ def _load_embeddings(path: Path, samples: Sequence[Sample]) -> np.ndarray:
     return values / np.clip(norms, 1e-12, None)
 
 
+def _load_embedding_caches(
+    paths: Sequence[Path], samples: Sequence[Sample]
+) -> np.ndarray:
+    """Join disjoint split caches by sample ID in manifest order."""
+    by_id: dict[str, np.ndarray] = {}
+    for path in paths:
+        with np.load(path, allow_pickle=False) as bundle:
+            values = np.asarray(bundle["values"], dtype=np.float32)
+            ids = list(bundle["sample_ids"].astype(str))
+        if len(ids) != len(values):
+            raise ValueError(f"Embedding cache rows and IDs differ: {path}")
+        for sample_id, value in zip(ids, values, strict=True):
+            if sample_id in by_id and not np.allclose(by_id[sample_id], value):
+                raise ValueError(f"Conflicting embeddings for {sample_id}: {path}")
+            by_id[sample_id] = value
+    missing = [sample.id for sample in samples if sample.id not in by_id]
+    if missing:
+        raise ValueError(f"Embedding caches miss {len(missing)} manifest samples")
+    values = np.stack([by_id[sample.id] for sample in samples]).astype(np.float32)
+    norms = np.linalg.norm(values, axis=1, keepdims=True)
+    return values / np.clip(norms, 1e-12, None)
+
+
 def ensure_embeddings(
     config: Mapping[str, Any], samples: Sequence[Sample], cache_path: Path
 ) -> np.ndarray:
@@ -316,6 +339,7 @@ def _selection_row(
     *,
     condition: str,
     lambda_value: float | None = None,
+    include_evaluation_metadata: bool = True,
 ) -> dict[str, Any]:
     ordered = _prompt_order(indices, similarities, train_ids)
     demos = [
@@ -331,7 +355,6 @@ def _selection_row(
     row: dict[str, Any] = {
         "query_id": query.id,
         "query_image": query.image,
-        "gold": query.label,
         "condition": condition,
         "demos": demos,
         "mean_similarity": float(np.mean([demo["similarity"] for demo in demos])),
@@ -339,12 +362,14 @@ def _selection_row(
         "prompt_order": "ascending_similarity_most_similar_nearest_query",
         "retrieval_scope": "global_complete_training_pool_no_class_quota",
     }
-    if query.group is not None:
-        row["group"] = query.group
-    if "conflict" in query.metadata:
-        row["conflict"] = bool(query.metadata["conflict"])
-    if "spurious_attribute" in query.metadata:
-        row["spurious_attribute"] = str(query.metadata["spurious_attribute"])
+    if include_evaluation_metadata:
+        row["gold"] = query.label
+        if query.group is not None:
+            row["group"] = query.group
+        if "conflict" in query.metadata:
+            row["conflict"] = bool(query.metadata["conflict"])
+        if "spurious_attribute" in query.metadata:
+            row["spurious_attribute"] = str(query.metadata["spurious_attribute"])
     if lambda_value is not None:
         row["lambda"] = lambda_value
     return row
@@ -388,6 +413,7 @@ def prepare_selections(
     }
     for split in ("validation", "test"):
         queries = [sample for sample in samples if sample.split == split]
+        include_evaluation_metadata = split != "test"
         injected = 0
         similarity_losses: list[float] = []
         for query in queries:
@@ -419,6 +445,7 @@ def prepare_selections(
                 similarities,
                 diagnostics,
                 condition=RICES,
+                include_evaluation_metadata=include_evaluation_metadata,
             )
             output_rows[(split, RICES)].append(rices_row)
             if diagnostics[rices_indices].any():
@@ -442,6 +469,7 @@ def prepare_selections(
                     similarities,
                     diagnostics,
                     condition=HARD,
+                    include_evaluation_metadata=include_evaluation_metadata,
                 )
             )
             for lambda_label, lambda_value in LAMBDA_GRID:
@@ -468,6 +496,7 @@ def prepare_selections(
                         diagnostics,
                         condition=condition,
                         lambda_value=lambda_value,
+                        include_evaluation_metadata=include_evaluation_metadata,
                     )
                 )
         for condition in (RICES, HARD, *(weighted_condition(label) for label, _ in LAMBDA_GRID)):
@@ -508,6 +537,57 @@ def _append_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
             handle.write(json.dumps(dict(row), ensure_ascii=False, sort_keys=True) + "\n")
 
 
+def seed_rices_context_cache_from_audit(
+    output: Path,
+    split: str,
+    audit_dir: Path,
+    samples: Sequence[Sample],
+) -> int:
+    """Reuse an exactly matched task-aware RICES audit without rescoring it."""
+    audit_path = audit_dir / "rices_predictions_label_free.jsonl"
+    if not audit_path.is_file():
+        raise ValueError(f"Audit RICES predictions not found: {audit_path}")
+    audit_by_id = {
+        str(row["query_id"]): row for row in load_jsonl(audit_path)
+    }
+    selections = load_jsonl(_condition_path(output, split, RICES))
+    split_samples = {sample.id: sample for sample in samples if sample.split == split}
+    if set(audit_by_id) != set(split_samples):
+        raise ValueError(f"Audit query IDs do not exactly cover {split}")
+    cache_path = output / "predictions" / split / "context_cache.jsonl"
+    existing = load_jsonl(cache_path) if cache_path.is_file() else []
+    existing_keys = {str(row["context_key"]) for row in existing}
+    seeded: list[dict[str, Any]] = []
+    for selection in selections:
+        query_id = str(selection["query_id"])
+        audit = audit_by_id[query_id]
+        selection_ids = [str(demo["id"]) for demo in selection["demos"]]
+        audit_ids = [str(value) for value in audit["retrieved_ids"]]
+        if selection_ids != audit_ids:
+            raise ValueError(f"RICES context mismatch for audit query {query_id}")
+        key = _context_key(selection)
+        if key in existing_keys:
+            continue
+        prediction = str(audit["prediction"])
+        cached = {
+                "context_key": key,
+                "query_id": query_id,
+                "prediction": prediction,
+                "scores": {
+                    label: float(value) for label, value in audit["scores"].items()
+                },
+                "retrieved_ids": selection_ids,
+                "cache_source": str(audit_path.resolve()),
+            }
+        if split != "test":
+            cached["gold"] = split_samples[query_id].label
+            cached["correct"] = prediction == split_samples[query_id].label
+        seeded.append(cached)
+        existing_keys.add(key)
+    _append_jsonl(cache_path, seeded)
+    return len(seeded)
+
+
 def score_conditions(
     config: Mapping[str, Any],
     samples: Sequence[Sample],
@@ -537,7 +617,18 @@ def score_conditions(
         try:
             for begin in range(0, len(jobs), wrapper_batch_size):
                 batch = jobs[begin : begin + wrapper_batch_size]
-                queries = [sample_by_id[str(row["query_id"])] for _, row in batch]
+                raw_queries = [sample_by_id[str(row["query_id"])] for _, row in batch]
+                queries = [
+                    Sample(
+                        id=query.id,
+                        split=query.split,
+                        image=query.image,
+                        label="" if split == "test" else query.label,
+                        text=query.text,
+                        options=query.options,
+                    )
+                    for query in raw_queries
+                ]
                 demo_batches = [
                     [sample_by_id[str(demo["id"])] for demo in row["demos"]]
                     for _, row in batch
@@ -549,12 +640,13 @@ def score_conditions(
                     checkpoint = {
                         "context_key": key,
                         "query_id": row["query_id"],
-                        "gold": row["gold"],
                         "prediction": prediction,
-                        "correct": prediction == row["gold"],
                         "scores": {label: float(scores[label]) for label in labels},
                         "retrieved_ids": [demo["id"] for demo in row["demos"]],
                     }
+                    if split != "test":
+                        checkpoint["gold"] = row["gold"]
+                        checkpoint["correct"] = prediction == row["gold"]
                     by_key[key] = checkpoint
                     checkpoint_rows.append(checkpoint)
                 _append_jsonl(cache_path, checkpoint_rows)
@@ -642,11 +734,12 @@ def paired(baseline: Sequence[Mapping[str, Any]], method: Sequence[Mapping[str, 
     }
 
 
-def validation_sweep(config: Mapping[str, Any], output: Path) -> dict[str, Any]:
+def validation_sweep(
+    config: Mapping[str, Any], output: Path, *, include_hard: bool = True
+) -> dict[str, Any]:
     labels = list(config["labels"])
     prediction_dir = output / "predictions" / "validation"
     rices = load_jsonl(prediction_dir / f"{RICES}.jsonl")
-    hard = load_jsonl(prediction_dir / f"{HARD}.jsonl")
     grid = []
     for lambda_label, lambda_value in LAMBDA_GRID:
         condition = weighted_condition(lambda_label)
@@ -720,19 +813,23 @@ def validation_sweep(config: Mapping[str, Any], output: Path) -> dict[str, Any]:
     result = {
         "selection_rule": selection_rule,
         "rices_metrics": rices_metrics,
-        "hard_coverage_metrics": metrics(hard, labels),
-        "hard_coverage_paired_vs_rices": paired(rices, hard),
         "grid": grid,
         "selected_lambda": selected["lambda"],
         "selected_lambda_value": selected["lambda_value"],
         "selected_validation_metrics": selected["metrics"],
     }
+    if include_hard:
+        hard = load_jsonl(prediction_dir / f"{HARD}.jsonl")
+        result["hard_coverage_metrics"] = metrics(hard, labels)
+        result["hard_coverage_paired_vs_rices"] = paired(rices, hard)
     write_json(output / "validation_lambda_sweep.json", result)
     return result
 
 
-def freeze_protocol(config: Mapping[str, Any], output: Path) -> dict[str, Any]:
-    sweep = validation_sweep(config, output)
+def freeze_protocol(
+    config: Mapping[str, Any], output: Path, *, include_hard: bool = True
+) -> dict[str, Any]:
+    sweep = validation_sweep(config, output, include_hard=include_hard)
     diagnostic = _diagnostic_spec(config)
     diagnostic_definition = str(
         diagnostic.get(
@@ -764,25 +861,61 @@ def freeze_protocol(config: Mapping[str, Any], output: Path) -> dict[str, Any]:
     return protocol
 
 
-def summarize(config: Mapping[str, Any], output: Path, split: str, lambda_label: str) -> dict[str, Any]:
+def summarize(
+    config: Mapping[str, Any],
+    output: Path,
+    split: str,
+    lambda_label: str,
+    *,
+    include_hard: bool = True,
+) -> dict[str, Any]:
     labels = list(config["labels"])
     prediction_dir = output / "predictions" / split
-    rices = load_jsonl(prediction_dir / f"{RICES}.jsonl")
-    hard = load_jsonl(prediction_dir / f"{HARD}.jsonl")
-    weighted = load_jsonl(prediction_dir / f"{weighted_condition(lambda_label)}.jsonl")
+    sample_by_id = {
+        sample.id: sample
+        for sample in load_manifest(config["manifest"])
+        if sample.split == split
+    }
+
+    def scored(condition: str) -> list[dict[str, Any]]:
+        rows = load_jsonl(prediction_dir / f"{condition}.jsonl")
+        joined: list[dict[str, Any]] = []
+        for row in rows:
+            sample = sample_by_id[str(row["query_id"])]
+            value = dict(row) | {
+                "gold": sample.label,
+                "correct": str(row["prediction"]) == sample.label,
+            }
+            if sample.group is not None:
+                value["group"] = sample.group
+            if "conflict" in sample.metadata:
+                value["conflict"] = bool(sample.metadata["conflict"])
+            if "spurious_attribute" in sample.metadata:
+                value["spurious_attribute"] = str(
+                    sample.metadata["spurious_attribute"]
+                )
+            joined.append(value)
+        if split == "test":
+            write_jsonl(prediction_dir / f"{condition}_scored_posthoc.jsonl", joined)
+        return joined
+
+    rices = scored(RICES)
+    weighted = scored(weighted_condition(lambda_label))
     result = {
         "split": split,
         "lambda": lambda_label,
         "methods": {
             RICES: metrics(rices, labels),
-            HARD: metrics(hard, labels),
             WEIGHTED: metrics(weighted, labels),
         },
         "paired_vs_rices": {
-            HARD: paired(rices, hard),
             WEIGHTED: paired(rices, weighted),
         },
     }
+    if include_hard:
+        hard = scored(HARD)
+        result["methods"][HARD] = metrics(hard, labels)
+        result["paired_vs_rices"][HARD] = paired(rices, hard)
     write_json(output / f"{split}_summary.json", result)
     return result
 
@@ -798,14 +931,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--embedding-cache", type=Path, required=True)
     parser.add_argument(
+        "--additional-embedding-cache",
+        type=Path,
+        action="append",
+        default=[],
+        help="Additional disjoint cache joined by sample ID (for example test embeddings)",
+    )
+    parser.add_argument(
         "--train-prior-cache",
         type=Path,
         help="Optional model-error prior cache shared by shot configurations.",
     )
     parser.add_argument(
+        "--audit-validation-dir",
+        type=Path,
+        help="Task-aware audit directory used to seed identical validation RICES contexts",
+    )
+    parser.add_argument(
+        "--audit-test-dir",
+        type=Path,
+        help="Task-aware audit directory used to seed identical test RICES contexts",
+    )
+    parser.add_argument(
         "--stage", choices=("prepare", "validation", "freeze", "test", "all"), default="all"
     )
     parser.add_argument("--wrapper-batch-size", type=int, default=2)
+    parser.add_argument(
+        "--skip-hard",
+        action="store_true",
+        help="Evaluate only RICES and weighted retrieval, omitting hard coverage",
+    )
     return parser.parse_args()
 
 
@@ -827,7 +982,15 @@ def main() -> None:
         config["manifest"] = str(args.manifest_override.resolve())
     output = args.output.resolve()
     samples = load_manifest(config["manifest"])
-    embeddings = ensure_embeddings(config, samples, args.embedding_cache.resolve())
+    embedding_paths = [
+        args.embedding_cache.resolve(),
+        *(path.resolve() for path in args.additional_embedding_cache),
+    ]
+    embeddings = (
+        _load_embedding_caches(embedding_paths, samples)
+        if args.additional_embedding_cache
+        else ensure_embeddings(config, samples, embedding_paths[0])
+    )
     diagnostic = _diagnostic_spec(config)
     priors = (
         score_train_prior(
@@ -841,6 +1004,17 @@ def main() -> None:
         else []
     )
     prepare_selections(config, samples, embeddings, priors, output)
+    audit_dirs = {
+        "validation": args.audit_validation_dir,
+        "test": args.audit_test_dir,
+    }
+    seeded = {
+        split: seed_rices_context_cache_from_audit(
+            output, split, path.resolve(), samples
+        )
+        for split, path in audit_dirs.items()
+        if path is not None
+    }
     write_json(
         output / "run_metadata.json",
         {
@@ -848,6 +1022,9 @@ def main() -> None:
             "config_fingerprint": _config_fingerprint(config),
             "manifest": config["manifest"],
             "embedding_cache": str(args.embedding_cache.resolve()),
+            "additional_embedding_caches": [
+                str(path.resolve()) for path in args.additional_embedding_cache
+            ],
             "train_prior_cache": (
                 str(args.train_prior_cache.resolve())
                 if args.train_prior_cache is not None
@@ -856,13 +1033,14 @@ def main() -> None:
             "shots": K,
             "diagnostic": diagnostic,
             "selection_method_name": WEIGHTED,
+            "seeded_rices_contexts_from_audit": seeded,
         },
     )
     if args.stage == "prepare":
         return
     validation_conditions = [
         RICES,
-        HARD,
+        *([] if args.skip_hard else [HARD]),
         *(weighted_condition(label) for label, _ in LAMBDA_GRID),
     ]
     if args.stage in ("validation", "all"):
@@ -874,11 +1052,11 @@ def main() -> None:
             validation_conditions,
             args.wrapper_batch_size,
         )
-        validation_sweep(config, output)
+        validation_sweep(config, output, include_hard=not args.skip_hard)
         if args.stage == "validation":
             return
     if args.stage in ("freeze", "all"):
-        protocol = freeze_protocol(config, output)
+        protocol = freeze_protocol(config, output, include_hard=not args.skip_hard)
         if args.stage == "freeze":
             print(json.dumps(protocol, ensure_ascii=False, indent=2))
             return
@@ -895,11 +1073,19 @@ def main() -> None:
             samples,
             output,
             "test",
-            [RICES, HARD, weighted_condition(selected)],
+            [
+                RICES,
+                *([] if args.skip_hard else [HARD]),
+                weighted_condition(selected),
+            ],
             args.wrapper_batch_size,
         )
-        validation = summarize(config, output, "validation", selected)
-        test = summarize(config, output, "test", selected)
+        validation = summarize(
+            config, output, "validation", selected, include_hard=not args.skip_hard
+        )
+        test = summarize(
+            config, output, "test", selected, include_hard=not args.skip_hard
+        )
         print(json.dumps({"validation": validation, "test": test}, ensure_ascii=False, indent=2))
 
 

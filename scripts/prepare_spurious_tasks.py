@@ -203,9 +203,14 @@ def prepare_spuco_animals(args: argparse.Namespace) -> None:
         ):
             folder = args.source / dataset / source_split / raw_label / attribute
             files = _ranked_files(folder, f"{dataset}:{source_split}:{raw_label}:{attribute}")
-            for image in _take(
-                files, count, name=f"{source_split}/{raw_label}/{attribute}"
-            ):
+            selected = (
+                files
+                if args.preserve_source_splits
+                else _take(
+                    files, count, name=f"{source_split}/{raw_label}/{attribute}"
+                )
+            )
+            for image in selected:
                 rows.append(
                     _row(
                         task="spuco",
@@ -555,6 +560,14 @@ def parse_args() -> argparse.Namespace:
     spuco.add_argument("--train-minority-per-group", type=int, default=20)
     spuco.add_argument("--validation-per-group", type=int, default=5)
     spuco.add_argument("--test-per-group", type=int, default=10)
+    spuco.add_argument(
+        "--preserve-source-splits",
+        action="store_true",
+        help=(
+            "include every official train/val/test image without group-balanced "
+            "subsampling; this preserves the source validation distribution"
+        ),
+    )
 
     metashift = sub.add_parser("metashift")
     _add_common(metashift)

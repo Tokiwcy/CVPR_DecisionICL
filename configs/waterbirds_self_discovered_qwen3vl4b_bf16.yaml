@@ -1,0 +1,33 @@
+seed: 20260826
+manifest: ../data/waterbirds/manifest.jsonl
+output_dir: ../artifacts/waterbirds_self_discovered
+labels:
+  - landbird
+  - waterbird
+prompt_shots: 3
+self_discovered_threshold_provenance:
+  frozen_before_dataset_audit: false
+  developed_on: waterbirds
+  note: Thresholds were revised after inspecting an earlier Waterbirds oracle audit.
+target_model:
+  kind: qwen3_vl
+  model: ../models/Qwen3-VL-4B-Instruct
+  quantization: none
+  dtype: bfloat16
+  device_map: auto
+  attn_implementation: sdpa
+  local_files_only: true
+  classification_batch_size: 4
+  icl_batch_size: 2
+  min_pixels: 65536
+  max_pixels: 401408
+  efficient_next_logits: true
+  max_new_tokens: 32
+  task_instruction: Classify the image as landbird or waterbird.
+similarity_model:
+  kind: siglip2
+  model: ../models/siglip2-base-patch16-224
+  dtype: float16
+  device: cuda
+  batch_size: 48
+  local_files_only: true

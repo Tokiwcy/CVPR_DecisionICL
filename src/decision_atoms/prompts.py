@@ -40,6 +40,14 @@ def discovery_prompt(
     atoms_per_bootstrap: int,
     source_mode: str,
 ) -> str:
+    if source_mode == "shift_audit":
+        return f"""You are auditing visual evidence learned by a frozen classifier.
+Group A images have class {label_a}; group B images have class {label_b}.
+List up to {atoms_per_bootstrap} independently judgeable visual properties that differ between the two groups. Search neutrally across every visible part of the image: the main object, other objects, surroundings, composition, capture conditions, and style. Do not assume in advance which properties define the class and which are accidental correlations; a separate held-out test will decide that. Each property must be answerable on one unseen image and must describe both sides concretely. Do not combine unrelated cues.
+For each property, also classify its semantic location as "object" when it is intrinsic morphology or a part of the main subject, "context" when it is surroundings, habitat, co-occurring objects, capture/style, or an accessory, and "uncertain" otherwise. This role is only a semantic prior; a separate quantitative audit will still decide whether the property is predictive.
+Return only a JSON array. Every item must have exactly these string fields:
+{{"concept": "short property name", "a_side": "what A visibly looks like", "b_side": "what B visibly looks like", "role": "object or context or uncertain"}}
+"""
     difficulty = (
         "These are difficult, low-margin examples for the classifier. Focus on subtle properties "
         "that separate the groups among these difficult examples; ignore properties shared by both groups."
@@ -50,8 +58,9 @@ def discovery_prompt(
 Group A images have class {label_a}; group B images have class {label_b}.
 {difficulty}
 Identify up to {atoms_per_bootstrap} independently judgeable visual properties. Each property must be answerable on one unseen image. Prefer object morphology, parts, texture, shape, markings, pose, and also report background/context only when it is consistently used by these examples. Do not combine unrelated cues in one property.
+For each property, also classify its semantic location as "object" when it is intrinsic morphology or a part of the main subject, "context" when it is surroundings, habitat, co-occurring objects, capture/style, or an accessory, and "uncertain" otherwise.
 Return only a JSON array. Every item must have exactly these string fields:
-{{"concept": "short property name", "a_side": "what A visibly looks like", "b_side": "what B visibly looks like"}}
+{{"concept": "short property name", "a_side": "what A visibly looks like", "b_side": "what B visibly looks like", "role": "object or context or uncertain"}}
 """
 
 

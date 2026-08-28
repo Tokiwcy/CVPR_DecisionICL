@@ -13,6 +13,7 @@ dependencies = [
   "Pillow>=10",
   "PyYAML>=6",
   "qwen-vl-utils>=0.0.14",
+  "scipy>=1.11",
   "torch>=2.6,<3",
   "transformers>=5.14,<6",
 ]
