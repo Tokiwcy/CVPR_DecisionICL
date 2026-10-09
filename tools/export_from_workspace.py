@@ -1,7 +1,7 @@
 """Export hash-verified DecisionICL paper results from a BehaviorICL workspace.
 
-Author-side command only: the public repository contains the generated tables
-and a standalone verifier, not private datasets, models, or raw target caches.
+The repository contains generated tables, original review inputs and portable
+verifiers; full raw/cache/numeric evidence is supplied through release assets.
 """
 
 from __future__ import annotations

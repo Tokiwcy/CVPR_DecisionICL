@@ -1,7 +1,6 @@
 {
   "release_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/tag/decisionicl-evidence-20261009",
   "tag": "decisionicl-evidence-20261009",
-  "publication_status": "prepared",
   "assets": [
     {
       "name": "decisionicl-audit-and-predictions-001.zip",

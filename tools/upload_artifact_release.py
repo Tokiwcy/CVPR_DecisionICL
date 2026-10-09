@@ -108,6 +108,14 @@ def main():
         receipts.append({key: uploaded[key] for key in ("name", "size", "digest", "browser_download_url")})
         print(json.dumps({"stage": "verified_upload", "name": asset["name"]}), flush=True)
     release = request(token, release["url"], "PATCH", {"draft": False, "body": bundle["release_body"]})
+    # Publishing replaces draft "untagged-*" download URLs with the final tag.
+    published_assets = {asset["name"]: asset for asset in request(token, release["assets_url"] + "?per_page=100")}
+    receipts = []
+    for expected in bundle["assets"]:
+        asset = published_assets[expected["name"]]
+        if asset.get("digest") != "sha256:" + expected["sha256"] or asset["size"] != expected["size"]:
+            raise ValueError("Published release asset differs: " + expected["name"])
+        receipts.append({key: asset[key] for key in ("name", "size", "digest", "browser_download_url")})
     result = {"release_url": release["html_url"], "tag": args.tag, "assets": receipts}
     (directory / "upload_receipt.json").write_text(json.dumps(result, ensure_ascii=True, indent=2) + "\n")
     print(json.dumps(result), flush=True)
