@@ -1,225 +1,40 @@
-# BehaviorICL
+# DecisionICL
 
-BehaviorICL studies which demonstrations teach a frozen vision-language model the intended visual rule in in-context classification.
+**DecisionICL** aligns in-context demonstration retrieval with visual decision factors elicited from the target vision-language model. The model proposes reusable factors; a frozen batched visual encoder measures factor evidence; validation-only calibration combines that evidence with a parent retriever. The method selects a class and then retrieves demonstrations directly from the **complete training pool** within that class. It is not a reranker over a small RICES candidate list.
 
-The main setting is 3-shot visual ICL with Qwen3-VL-4B-Instruct in native bfloat16 and SigLIP2 image similarity. Standard RICES uses global top-k retrieval: there is no class quota and the most similar selected demonstration is placed closest to the query.
+This repository is an in-progress CVPR research release. It separates independently audited results from an authorized but **paused** multi-seed repeat. All accuracy and paired statistics below come from the frozen single-seed main experiments, not from unfinished repeats.
 
-## Methods
+## Audited results intended for the paper
 
-### 1. RICES baseline
+The main matrix covers Qwen3-VL-4B BF16, Qwen2.5-VL-7B NF4, and Gemma4 12B NF4 on DTD, Aircraft, CUB, Stanford Dogs, and Flowers102 at 1 and 2 shots: **180/180 method results independently audited**. It includes Random, RICES, MUIER, and (at 2 shots) CIRCLES, with a matched DecisionICL extension for each retrieval parent. Across the 75 matched parent→DecisionICL comparisons, 75 gains are positive. This is a descriptive count over correlated cells, not 75 independent tests.
 
-For query image `q` and training demonstration `d`, RICES selects the global top-k examples by cosine similarity:
+| Target model | Equal-cell mean DecisionICL−parent gain | Audited matched cells |
+| --- | ---: | ---: |
+| Qwen3-VL-4B BF16 | +2.06 percentage points | 25 |
+| Qwen2.5-VL-7B NF4 | +3.11 percentage points | 25 |
+| Gemma4 12B NF4 | +3.52 percentage points | 25 |
 
-```text
-score(d, q) = similarity(d, q)
-```
+The full 15-row model/dataset table, including each parent and its DecisionICL extension at each shot, is in [results/main_results.md](results/main_results.md). [results/supplementary_results.md](results/supplementary_results.md) gives every method cell and paired comparison. Machine-readable [method results](results/method_results.csv) and [paired results](results/paired_results.csv) retain full precision, macro accuracy, invalid outputs, rescue/harm, bootstrap 95% confidence intervals, and unadjusted two-sided exact McNemar p-values. These files keep the experiment's internal method ID in `source_method` while displaying **DecisionICL** as the publication name.
 
-### 2. Oracle diagnostic selection
+Audited Qwen3 controls are also included: 25 Generic direct-sample cells, a 3-dataset rotated factor/class control, a 3-dataset no-factor same-class gate, and a 3-dataset frozen-CLIP visual-centroid gate. Their different scientific questions and mixed findings are stated in [results/ablations.md](results/ablations.md). The Generic direct-sample variant changes the retrieval rule, so it does not isolate factor vocabulary by itself. Test outcomes were not used to choose factors, weights, prompts, or calibration parameters.
 
-This controlled method uses **training-set spurious-attribute metadata**. It never uses query/test metadata for selection.
+## Work still to run or finish
 
-For Waterbirds, a training example is diagnostic when bird label and background disagree. For Spawrious O2O, it is diagnostic when a breed appears in the shared filler location instead of its aligned location.
+The **Qwen3 full three-seed repeat is paused by the user**, not complete. Seed 42 is the audited reference. Fresh seed 17 and 73 runs were planned over all five datasets, both shots, and every method, with no reuse of old target predictions: **120 new method results**. Only **41/120** have passed independent audit. Seed 17 is complete for DTD, Aircraft, and CUB at both shots and Dogs at 1 shot. Dogs 2-shot has partial raw cache only, and Flowers102 1/2-shot and every seed-73 block remain. There is **no valid three-seed aggregate yet**. See [results/pending.md](results/pending.md) for the exact remaining block list, cache boundary, audit gates, and the distinction between queued inference and optional future analyses. The paused run should be resumed only with a new isolated, independently preflighted root, not by editing the frozen runner or the old root in place.
 
-Two selectors are included:
+No further GPU ablation is currently queued. The completed no-factor and other controls should be interpreted as they are; optional manuscript analyses and any additional experiments are listed separately in [results/pending.md](results/pending.md).
 
-- `hard_coverage_global_3shot`: retain RICES unless the context has no diagnostic example; then replace the least-similar selected demo with the closest diagnostic demo.
-- `weighted_*_global_3shot`: select global top-k using
+## Code and provenance
 
-```text
-score(d, q) = similarity(d, q) + lambda * diagnostic(d)
-```
+- [research_code/decisionicl.py](research_code/decisionicl.py) is a small, NumPy-only reference for the central class-prototype, calibration, and complete-pool selection operations. It is illustrative; it does not reproduce the full target-model pipeline by itself.
+- [research_code/frozen/](research_code/frozen/) contains the unchanged research-source snapshot needed to trace the audited main and control experiments. Its [SHA-256 manifest](research_code/frozen/snapshot_manifest.json) records every copied file. Internal experiment identifiers remain intact to preserve the hash-bound protocols.
+- [research_code/README.md](research_code/README.md) maps each result family to its actual runner, calibration, audit, and protocol files and explains reproducibility prerequisites.
+- [results/export_manifest.json](results/export_manifest.json) records 152 verified source-file hashes, ledger inputs, exported-file hashes, and result counts. Run `python tools/verify_results.py` to check the published bundle. The exporter is [tools/export_from_workspace.py](tools/export_from_workspace.py); it needs the original private/workspace artifacts and is not required to read the released summaries.
 
-`lambda` is selected separately for each dataset/model/shot setting on validation and frozen before test evaluation.
+The pre-existing `src/behavior_icl/`, `src/decision_atoms/`, root `scripts/`, configurations, and tests belong to an earlier BehaviorICL spurious-dataset project. They were **not changed** for this release. Its original README is preserved as [LEGACY_BEHAVIORICL.md](LEGACY_BEHAVIORICL.md). DecisionICL paper numbers must be taken from `results/`, not from the legacy Waterbirds/Spawrious tables.
 
-### 3. Metadata-free failure-contrastive discovery
+## Reproduction boundary
 
-This method asks what a demonstration/rule teaches rather than whether an individual image is merely difficult.
+The summaries and manifests can be inspected without model weights or datasets. The original GPU evaluation requires the corresponding dataset manifests and images, train/validation/test splits, frozen factor banks and image evidence, CLIP embeddings, model weights, and the matching artifacts documented in the frozen protocols; these large or licensed inputs are not redistributed here. The published statistics are **not** regenerated by running the NumPy reference on synthetic data. For a lightweight code check, install NumPy and pytest, then run `python -m pytest tests/test_decisionicl.py -q` from `research_code/`.
 
-1. Run RICES on validation and mine frequent `(gold label -> predicted label)` confusion directions.
-2. In four out-of-fold splits, construct each induction panel from representative errors, visually matched correct gold controls, and visually matched correct confuser controls.
-3. Ask the frozen VLM to induce visible class cues, shared non-diagnostic cues, a failure hypothesis, and a corrective rule.
-4. Keep the original RICES demonstrations and append the learned rule only to queries routed by the baseline prediction.
-5. Enable a confusion pair only when its held-out utility is positive:
-
-```text
-U = rescue - beta * harm
-```
-
-`rescue` counts baseline errors corrected by the rule; `harm` counts baseline-correct predictions changed to errors. The released safety setting is `beta=2`. Discovery and routing use labels, model predictions, and visual similarity, but no background/group annotations. Test labels and group metadata are read only after predictions are frozen for reporting.
-
-## Main frozen results
-
-Qwen3-VL-4B-Instruct, bfloat16, global 3-shot:
-
-| Dataset | Method | Test accuracy | Worst-group accuracy |
-|---|---:|---:|---:|
-| Waterbirds | RICES | 85.00 | 74.80 |
-| Waterbirds | hard diagnostic coverage | 85.70 | 75.60 |
-| Waterbirds | weighted diagnostic, `lambda=0.075` | **87.80** | **80.40** |
-| Spawrious O2O Easy | RICES | 89.58 | 79.27 |
-| Spawrious O2O Easy | hard diagnostic coverage | 92.61 | 85.28 |
-| Spawrious O2O Easy | weighted diagnostic, `lambda=0.20` | **94.75** | **86.83** |
-
-Metadata-free failure-contrastive discovery:
-
-- Spawrious O2O Easy, `beta=2`: 89.58% -> **91.78%**, with 576 rescues and 28 harms. Only Labrador<->Bulldog passed the all-fold validation gate. Worst-group accuracy remained 79.27% because the Dachshund direction was rejected.
-- Waterbirds initial `beta=1` test was a negative result: 85.9% -> 86.0%, with 31 rescues and 30 harms, while worst-group accuracy fell from 71.6% to 62.8%. A later `beta=2` validation rule abstains, but this revision was made after inspecting that test and is **not** presented as an independent test result.
-
-The failure-contrastive runs use separately frozen RICES prediction caches, so their RICES numbers should be compared only within that experiment, not substituted for the selection-table baselines above.
-
-Machine-readable summaries are under [`results/`](results/).
-
-## Repository layout
-
-```text
-configs/                         reproducible model/task templates
-scripts/prepare_waterbirds.py    Waterbirds metadata -> JSONL manifest
-scripts/prepare_spurious_tasks.py Spawrious/SpuCoAnimals/MetaShift preparation
-scripts/run_mvp.py               controlled A/B/C/D Waterbirds experiment
-scripts/run_three_shot_weighted.py Waterbirds RICES/hard/weighted runner
-scripts/run_multiclass_weighted.py generic RICES/hard/weighted runner
-scripts/run_failure_contrastive_discovery.py automatic rule discovery and gate
-src/behavior_icl/                minimal Qwen scoring backend
-src/decision_atoms/              manifest, SigLIP and target-model utilities
-tests/                           selection, protocol and leakage tests
-```
-
-## Installation
-
-Python 3.10+ and a CUDA environment compatible with PyTorch are recommended.
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[test]"
-```
-
-On Windows PowerShell, activate with `.\.venv\Scripts\Activate.ps1`. NF4 experiments additionally require `python -m pip install -e ".[quantization]"`; the reported 4B results use native bfloat16.
-
-Download the two frozen models:
-
-```bash
-hf download Qwen/Qwen3-VL-4B-Instruct --local-dir models/Qwen3-VL-4B-Instruct
-hf download google/siglip2-base-patch16-224 --local-dir models/siglip2-base-patch16-224
-```
-
-Model pages: [Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) and [SigLIP2 base patch16-224](https://huggingface.co/google/siglip2-base-patch16-224).
-
-## Data download and preparation
-
-Datasets are not redistributed in this repository. Follow the original licenses and terms.
-
-### Waterbirds
-
-Waterbirds is released by the [Group DRO project](https://github.com/kohpangwei/group_DRO#waterbirds). Download the prepared `waterbird_complete95_forest2water2` archive from the project link:
-
-```bash
-mkdir -p data/waterbirds
-curl -L https://nlp.stanford.edu/data/dro/waterbird_complete95_forest2water2.tar.gz -o data/waterbirds/waterbirds.tar.gz
-tar -xzf data/waterbirds/waterbirds.tar.gz -C data/waterbirds
-```
-
-The Group DRO README also documents access through [WILDS](https://wilds.stanford.edu/) if the direct archive is unavailable. The extracted folder must contain `metadata.csv` and the class image folders. Convert it to the common manifest:
-
-```bash
-python scripts/prepare_waterbirds.py \
-  --source data/waterbirds/waterbird_complete95_forest2water2 \
-  --output data/waterbirds/manifest.jsonl
-```
-
-### Spawrious O2O Easy
-
-Use the [official Spawrious repository](https://github.com/aengusl/spawrious), which provides both direct challenge downloads and a Python downloader:
-
-```bash
-python -m pip install "git+https://github.com/aengusl/spawrious.git"
-python -c "from spawrious.torch import get_spawrious_dataset; get_spawrious_dataset(dataset_name='o2o_easy', root_dir='data/spawrious_raw')"
-```
-
-Point `--source` at the directory containing `spawrious224/0`, `spawrious224/1`, and the OOD scene folders:
-
-```bash
-python scripts/prepare_spurious_tasks.py spawrious \
-  --source data/spawrious_raw \
-  --output data/spawrious_o2o_easy \
-  --challenge o2o_easy \
-  --full-evaluation \
-  --validation-per-group-per-environment 50
-```
-
-Run the integrity check before a long evaluation:
-
-```bash
-python scripts/verify_manifest_images.py \
-  --manifest data/spawrious_o2o_easy/manifest.jsonl \
-  --report data/spawrious_o2o_easy/image_verification.json \
-  --full-load
-```
-
-## Running diagnostic-aware selection
-
-The generic runner caches SigLIP embeddings, evaluates validation, freezes `lambda`, and then evaluates test:
-
-```bash
-python scripts/run_multiclass_weighted.py \
-  --config configs/spawrious_o2o_easy_qwen3vl4b_bf16.yaml \
-  --output artifacts/spawrious_weighted \
-  --embedding-cache artifacts/spawrious_weighted/siglip2_embeddings.npz \
-  --stage all
-```
-
-Replace the config with `configs/waterbirds_qwen3vl4b_bf16.yaml` for Waterbirds. For strict held-out reporting, run stages separately in the order `prepare`, `validation`, `freeze`, and `test`, and never modify the frozen protocol after test begins.
-
-## Running metadata-free failure-contrastive discovery
-
-The method consumes frozen RICES validation predictions and the already cached SigLIP embeddings. Example for Spawrious:
-
-```bash
-python scripts/run_failure_contrastive_discovery.py prepare \
-  --manifest data/spawrious_o2o_easy/manifest.jsonl \
-  --predictions artifacts/spawrious_weighted/predictions/validation/rices_global_3shot.jsonl \
-  --embedding-cache artifacts/spawrious_weighted/siglip2_embeddings.npz \
-  --output artifacts/spawrious_failure/panels.jsonl
-
-python scripts/run_failure_contrastive_discovery.py induce \
-  --config configs/spawrious_o2o_easy_qwen3vl4b_bf16.yaml \
-  --panels artifacts/spawrious_failure/panels.jsonl \
-  --output artifacts/spawrious_failure/rules.jsonl
-
-python scripts/run_failure_contrastive_discovery.py evaluate \
-  --config configs/spawrious_o2o_easy_qwen3vl4b_bf16.yaml \
-  --manifest data/spawrious_o2o_easy/manifest.jsonl \
-  --predictions artifacts/spawrious_weighted/predictions/validation/rices_global_3shot.jsonl \
-  --embedding-cache artifacts/spawrious_weighted/siglip2_embeddings.npz \
-  --rules artifacts/spawrious_failure/rules.jsonl \
-  --output artifacts/spawrious_failure/validation_predictions.jsonl \
-  --summary artifacts/spawrious_failure/validation_summary.json \
-  --scope full_routed \
-  --punish-beta 2
-```
-
-Only confusion pairs that pass the validation rule may be enabled for frozen test inference.
-
-After freezing the validation summary, test evaluation uses the test RICES cache and explicitly supplies that summary:
-
-```bash
-python scripts/run_failure_contrastive_discovery.py evaluate \
-  --config configs/spawrious_o2o_easy_qwen3vl4b_bf16.yaml \
-  --manifest data/spawrious_o2o_easy/manifest.jsonl \
-  --predictions artifacts/spawrious_weighted/predictions/test/rices_global_3shot.jsonl \
-  --rules artifacts/spawrious_failure/rules.jsonl \
-  --validation-summary artifacts/spawrious_failure/validation_summary.json \
-  --output artifacts/spawrious_failure/test_predictions.jsonl \
-  --summary artifacts/spawrious_failure/test_summary.json \
-  --scope frozen_test \
-  --punish-beta 2
-```
-
-## Tests
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-The tests cover global top-k selection, diagnostic coverage, weighted ranking, deterministic folds, confusion mining, rescue/harm accounting, all-fold gating, and protection against test/group metadata entering selection or routing.
+The five named datasets were part of method development; the reported main results are exploratory rather than a newly frozen confirmatory benchmark. Source hashes and calibration records support reproducibility of those runs, while the paused multi-seed repeat is explicitly outside the current paper result table.

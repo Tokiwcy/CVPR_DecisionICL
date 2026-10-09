@@ -1,0 +1,24 @@
+{
+  "ledger_source_count": 152,
+  "main_result_count": 180,
+  "decision_parent_pairs": 75,
+  "positive_decision_parent_pairs": 75,
+  "model_mean_gain_pp": {
+    "Qwen3-VL-4B BF16": 2.0623648682962683,
+    "Qwen2.5-VL-7B NF4": 3.1068876787889472,
+    "Gemma4 12B NF4": 3.5207789991409095
+  },
+  "model_raw_p_below_0_05_count": {
+    "Qwen3-VL-4B BF16": 21,
+    "Qwen2.5-VL-7B NF4": 25,
+    "Gemma4 12B NF4": 24
+  },
+  "generic_compared_cells": 25,
+  "generic_below_decision_cells": 24,
+  "generic_minus_decision_mean_pp": -1.3565708471366815,
+  "rotation_minus_decision_pp": {
+    "dtd": -2.074468085106389,
+    "aircraft": -9.090909090909093,
+    "cub": -1.2724238631622882
+  }
+}

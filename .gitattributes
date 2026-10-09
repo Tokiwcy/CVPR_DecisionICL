@@ -4,3 +4,10 @@
 *.jpeg binary
 *.npz binary
 *.npy binary
+
+# Preserve the exact source bytes committed by the SHA-256 publication manifests.
+research_code/frozen/** -text
+results/*.csv -text
+results/*.json -text
+results/main_results.md -text
+results/supplementary_results.md -text

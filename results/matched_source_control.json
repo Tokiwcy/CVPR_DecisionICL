@@ -1,0 +1,54 @@
+[
+  {
+    "dataset": "dtd",
+    "parent": "rices",
+    "n": 1880,
+    "decisionicl_accuracy_pct": 76.59574468085107,
+    "generic_accuracy_pct": 76.96808510638297,
+    "decisionicl_minus_generic_pp": -0.37234042553191404,
+    "rescue": 30,
+    "harm": 37,
+    "exact_mcnemar_raw_p": 0.46381761789686937,
+    "complete_sha256": "0e3996714e2dc52637ce2dfe0b62f1a44dc570d4fafcc38362dab60c8cc1028e",
+    "independent_audit_sha256": "f50a6574d767b81fdd8c866ab343a5598d3149cbd94bdbfaefb183f346442981"
+  },
+  {
+    "dataset": "dtd",
+    "parent": "muier",
+    "n": 1880,
+    "decisionicl_accuracy_pct": 77.2872340425532,
+    "generic_accuracy_pct": 76.75531914893618,
+    "decisionicl_minus_generic_pp": 0.5319148936170137,
+    "rescue": 37,
+    "harm": 27,
+    "exact_mcnemar_raw_p": 0.26043547657665356,
+    "complete_sha256": "0e3996714e2dc52637ce2dfe0b62f1a44dc570d4fafcc38362dab60c8cc1028e",
+    "independent_audit_sha256": "f50a6574d767b81fdd8c866ab343a5598d3149cbd94bdbfaefb183f346442981"
+  },
+  {
+    "dataset": "aircraft",
+    "parent": "rices",
+    "n": 3333,
+    "decisionicl_accuracy_pct": 65.58655865586559,
+    "generic_accuracy_pct": 64.44644464446445,
+    "decisionicl_minus_generic_pp": 1.1401140114011388,
+    "rescue": 142,
+    "harm": 104,
+    "exact_mcnemar_raw_p": 0.018141890385553663,
+    "complete_sha256": "e465e1f6bfe11b18056fd807eba01116c6d01f9983c629cdcb2a46d25a368150",
+    "independent_audit_sha256": "09be1a1c09d63d4fb21813003db33dbe15543929db5559bdf537a5ed549b2c1f"
+  },
+  {
+    "dataset": "aircraft",
+    "parent": "muier",
+    "n": 3333,
+    "decisionicl_accuracy_pct": 65.34653465346535,
+    "generic_accuracy_pct": 64.65646564656466,
+    "decisionicl_minus_generic_pp": 0.6900690069006954,
+    "rescue": 126,
+    "harm": 103,
+    "exact_mcnemar_raw_p": 0.14583841090488991,
+    "complete_sha256": "e465e1f6bfe11b18056fd807eba01116c6d01f9983c629cdcb2a46d25a368150",
+    "independent_audit_sha256": "09be1a1c09d63d4fb21813003db33dbe15543929db5559bdf537a5ed549b2c1f"
+  }
+]
