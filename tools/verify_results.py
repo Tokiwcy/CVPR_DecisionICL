@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import zipfile
 from collections import Counter
 from pathlib import Path
 
@@ -46,6 +47,16 @@ def main() -> None:
     code_manifest = json.loads((code_root / "snapshot_manifest.json").read_text(encoding="utf-8"))
     for relative, expected in code_manifest["files"].items():
         assert digest(code_root / relative) == expected, f"code hash mismatch: {relative}"
+
+    review_manifest = json.loads((ROOT / "artifact_bundle/review_manifest.json").read_text())
+    review = ROOT / "artifact_bundle" / review_manifest["archive"]["name"]
+    assert digest(review) == review_manifest["archive"]["sha256"], "review archive differs"
+    with zipfile.ZipFile(review) as archive:
+        assert set(archive.namelist()) == set(review_manifest["files"])
+        for relative, expected in review_manifest["files"].items():
+            raw = archive.read(relative)
+            assert hashlib.sha256(raw).hexdigest() == expected["sha256"], relative
+            assert len(raw) == expected["size"], relative
 
     with (RESULTS / "method_results.csv").open(newline="", encoding="utf-8") as stream:
         methods = list(csv.DictReader(stream))
@@ -103,6 +114,7 @@ def main() -> None:
         "frozen_code_files_verified": len(code_manifest["files"]),
         "method_results": len(methods), "paired_results": len(paired),
         "main_pairs": len(main_pairs),
+        "review_artifact_files_verified": len(review_manifest["files"]),
         "paused_three_seed_additional_audited": exported["qwen3_three_seed_additional_results_audited_but_not_aggregated"],
     }, sort_keys=True))
 

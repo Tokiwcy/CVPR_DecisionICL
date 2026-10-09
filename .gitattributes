@@ -11,3 +11,7 @@ results/*.csv -text
 results/*.json -text
 results/main_results.md -text
 results/supplementary_results.md -text
+artifact_bundle/*.zip binary
+artifact_bundle/*.gz binary
+artifact_bundle/*.json -text
+artifact_bundle/SHA256SUMS.txt -text

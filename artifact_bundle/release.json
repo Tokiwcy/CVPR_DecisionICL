@@ -1,0 +1,67 @@
+{
+  "release_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/tag/decisionicl-evidence-20261009",
+  "tag": "decisionicl-evidence-20261009",
+  "publication_status": "prepared",
+  "assets": [
+    {
+      "name": "decisionicl-audit-and-predictions-001.zip",
+      "size": 56145728,
+      "digest": "sha256:02822ea604b4e0822baf4bb6ce5210370f4c9a6962b4153e89e1d9d3571bdeb6",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-audit-and-predictions-001.zip"
+    },
+    {
+      "name": "decisionicl-raw-and-cache-001.zip",
+      "size": 174552252,
+      "digest": "sha256:5491be47acda074445f1d0452d8bf7606ab5ac5d376376d6755805f07152db83",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-raw-and-cache-001.zip"
+    },
+    {
+      "name": "decisionicl-raw-and-cache-002.zip",
+      "size": 9291624,
+      "digest": "sha256:0f5cf204396b7a057eca8fa23ab67c3829f523caf6ce2f2c04efb4fb0c927bd0",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-raw-and-cache-002.zip"
+    },
+    {
+      "name": "decisionicl-numeric-resources-001.zip",
+      "size": 795951671,
+      "digest": "sha256:9205356dda7dd863712ee9d443a9bb03ad260d25cc49c93dbe6855ff649a5cd2",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-numeric-resources-001.zip"
+    },
+    {
+      "name": "decisionicl-numeric-resources-002.zip",
+      "size": 582248206,
+      "digest": "sha256:d6c8870dcd38425b78c5a75b8449e2a4d4ae4e700ba77bf76602cbeccdc0dad2",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-numeric-resources-002.zip"
+    },
+    {
+      "name": "decisionicl-supplement-audit-and-predictions-001.zip",
+      "size": 24768,
+      "digest": "sha256:553c59df9425eed386af24639c1a07b3a5c72cd9159487415f6ecf25ba1872bf",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-supplement-audit-and-predictions-001.zip"
+    },
+    {
+      "name": "decisionicl-supplement-raw-and-cache-001.zip",
+      "size": 133524,
+      "digest": "sha256:14f2fbdaaddb56956560fe05ccdd0eb7a55fb780af06309e93dbc28e48ae4b6d",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-supplement-raw-and-cache-001.zip"
+    },
+    {
+      "name": "decisionicl-artifact-manifest.json.gz",
+      "size": 6958633,
+      "digest": "sha256:c01ed1fa29cda3a03e3e851274a6a6bdb076fc7bc57fb305842309431a9ba506",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-artifact-manifest.json.gz"
+    },
+    {
+      "name": "decisionicl-review-artifacts.zip",
+      "size": 16856976,
+      "digest": "sha256:9aed818561de505e7164db671221d9c23430094bff22798fe9255de716731c1b",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/decisionicl-review-artifacts.zip"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 958,
+      "digest": "sha256:fcab30982f26a02e2a1ce2f289a2cbf2abb36d36247ee139a263d95c37f0381c",
+      "browser_download_url": "https://github.com/Tokiwcy/CVPR_DecisionICL/releases/download/decisionicl-evidence-20261009/SHA256SUMS.txt"
+    }
+  ]
+}
